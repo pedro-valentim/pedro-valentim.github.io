@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Redirecting…</title>
+  <script>
+    (function () {
+      // Try several likely locations for index.html (absolute root, relative, repo base)
+      var candidates = [
+        '/index.html',
+        'index.html',
+        (function () {
+          var segs = location.pathname.split('/');
+          if (segs.length > 1 && segs[1]) return '/' + segs[1] + '/index.html';
+          return '/index.html';
+        })(),
+      ];
+
+      function tryFetch(i) {
+        if (i >= candidates.length) {
+          // Give up and go to site root
+          location.replace('/');
+          return;
+        }
+        fetch(candidates[i])
+          .then(function (r) {
+            if (!r.ok) throw new Error('not-found');
+            return r.text();
+          })
+          .then(function (html) {
+            document.open();
+            document.write(html);
+            document.close();
+            // Preserve the original URL so the SPA router can handle it
+            history.replaceState({}, '', location.pathname + location.search + location.hash);
+          })
+          .catch(function () {
+            tryFetch(i + 1);
+          });
+      }
+
+      tryFetch(0);
+    })();
+  </script>
+</head>
+<body></body>
+</html>
